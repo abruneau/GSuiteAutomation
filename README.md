@@ -77,10 +77,11 @@ GSuiteAutomation/
    - Authenticate clasp:
      ```sh
      clasp login
+     clasp create --type sheet --rootDir dist
      ```
    - Push code to Apps Script:
      ```sh
-     clasp push
+     npm run deploy
      ```
 
 ## Configuration Options

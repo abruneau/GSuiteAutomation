@@ -25,7 +25,7 @@ export class CalendarSync {
 
     sync(fullSync = false) {
         let options: { [k: string]: any } = {
-            maxResults: 10, 
+            maxResults: 10,
             eventTypes: 'default',
         };
 
@@ -125,6 +125,11 @@ export class CalendarSync {
                             meeting.createNote();
                             notes++;
                         }
+                    }
+                } else if (!meeting.isExternal() && meeting.is1to1()) {
+                    if (this.config.meetingToNote) {
+                        meeting.createNote();
+                        notes++;
                     }
                 }
             });

@@ -1,4 +1,3 @@
-import { Context } from './context';
 import { Settings } from './settings';
 
 interface CallerInfo {
@@ -49,6 +48,15 @@ export class Log {
       console.error(this.formatLogMessage('ERROR', callerInfo, message));
     } else {
       console.error(`ERROR ${message}`);
+    }
+  }
+
+  warn(message: string) {
+    const callerInfo = this.getFileName();
+    if (callerInfo) {
+      console.warn(this.formatLogMessage('WARN', callerInfo, message));
+    } else {
+      console.warn(`WARN ${message}`);
     }
   }
 

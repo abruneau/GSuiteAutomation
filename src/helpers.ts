@@ -1,18 +1,24 @@
-export function getRelativeDate(start: Date, daysOffset: number, hour: number, minutes: number) {
-    let date = new Date(start);
-    date.setDate(date.getDate() + daysOffset);
-    date.setHours(date.getHours() + hour);
-    date.setMinutes(date.getMinutes() + minutes);
-    return date;
+export function getRelativeDate(
+  start: Date,
+  daysOffset: number,
+  hour: number,
+  minutes: number
+) {
+  const date = new Date(start);
+  date.setDate(date.getDate() + daysOffset);
+  date.setHours(date.getHours() + hour);
+  date.setMinutes(date.getMinutes() + minutes);
+  return date;
 }
 
 export function titleCase(str: string): string {
-    let splitStr = str.toLowerCase().split(' ');
-    for (let i = 0; i < splitStr.length; i++) {
-        // You do not need to check if i is larger than splitStr length, as your for does that for you
-        // Assign it back to the array
-        splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
-    }
-    // Directly return the joined string
-    return splitStr.join(' ');
+  const splitStr = str.toLowerCase().split(' ');
+  for (let i = 0; i < splitStr.length; i++) {
+    // You do not need to check if i is larger than splitStr length, as your for does that for you
+    // Assign it back to the array
+    splitStr[i] =
+      splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
+  }
+  // Directly return the joined string
+  return splitStr.join(' ');
 }

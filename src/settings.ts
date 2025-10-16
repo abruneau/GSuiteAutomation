@@ -1,4 +1,3 @@
-
 /**
  * Constants for boolean settings values.
  */

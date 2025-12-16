@@ -378,6 +378,8 @@ describe('Meeting', () => {
       // Mock isExternal to return true
       jest.spyOn(meeting, 'isExternal').mockReturnValue(true);
 
+      // jest.spyOn(meeting, 'isOnsite').mockReturnValue(false);
+
       meeting.colorize();
 
       expect(mockEvent.setColor).toHaveBeenCalledWith('PALE_RED');

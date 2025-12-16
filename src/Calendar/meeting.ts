@@ -111,6 +111,13 @@ export class Meeting {
     return this.attendees().length === 2;
   }
 
+  isOnsite(): boolean {
+    if (this.event.location?.includes("Google Meet")) {
+      return false
+    }
+    return !!(this.event.location && this.event.location !== '' && this.event.location !== null);
+  }
+
   createBlocker(cal: GoogleAppsScript.Calendar.Calendar) {
     const blockers = this.blockers(cal);
     if (!blockers || blockers.length === 0) {
@@ -167,7 +174,11 @@ export class Meeting {
     if (evnt.getColor() === '') {
       // don't change color if already modified
       if (this.isExternal()) {
-        evnt.setColor(CalendarApp.EventColor.PALE_RED.toString());
+        if (this.isOnsite()) {
+          evnt.setColor(CalendarApp.EventColor.RED.toString());
+        } else {
+          evnt.setColor(CalendarApp.EventColor.PALE_RED.toString());
+        }
       } else if (this.is1to1()) {
         evnt.setColor(CalendarApp.EventColor.PALE_GREEN.toString());
       }

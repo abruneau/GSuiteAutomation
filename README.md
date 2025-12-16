@@ -77,7 +77,7 @@ GSuiteAutomation/
    - Authenticate clasp:
      ```sh
      clasp login
-     clasp create --type sheet --rootDir dist
+     clasp create --type sheets --rootDir dist
      ```
    - Push code to Apps Script:
      ```sh

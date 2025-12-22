@@ -115,6 +115,9 @@ export class Meeting {
     if (this.event.location?.includes("Google Meet")) {
       return false
     }
+    if (this.event.location?.includes("Microsoft Teams Meeting")) {
+      return false
+    }
     return !!(this.event.location && this.event.location !== '' && this.event.location !== null);
   }
 

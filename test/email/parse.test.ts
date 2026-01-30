@@ -9,28 +9,41 @@ import { Settings } from '../../src/settings';
 import { Email } from '../../src/Mail/email';
 
 describe('test parse functions', () => {
+  let db: TldDatabase;
+  let ctx: Context;
 
-    fs.readFile(path.resolve(__dirname, "effective_tld_names.dat"), (err, data) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
+  beforeAll(() => {
+    const data = fs.readFileSync(
+      path.resolve(__dirname, 'effective_tld_names.dat'),
+      'utf8'
+    );
 
-        UrlFetchAppStubConfiguration.when('https://publicsuffix.org/list/effective_tld_names.dat')
-            .return(new HttpResponse().setContentText(data.toString()))
-    })
+    UrlFetchAppStubConfiguration.when(
+      'https://publicsuffix.org/list/effective_tld_names.dat'
+    ).return(new HttpResponse().setContentText(data));
 
-    let db: TldDatabase
-    let ctx: Context
+    db = new TldDatabase();
+    ctx = new Context(new Settings());
+    ctx.tldsDB = db;
+  });
 
-    beforeAll(() => {
-        db = new TldDatabase()
-        ctx = new Context(new Settings())
-        ctx.tldsDB = db
-    })
+  it('should extract base domain name', () => {
+    const mail = new Email(ctx, 'test@partner.domain.com');
+    expect(mail.rootDomain).toBe('domain.com');
+  });
 
-    it('should extract base domain name', () => {
-        let mail = new Email(ctx, 'test@partner.domain.com')
-        expect(mail.rootDomain).toBe('domain.com')
-    })
-}) 
+  it('should support multi-part TLDs like .co.za', () => {
+    const mail = new Email(ctx, 'test@bcx.co.za');
+    expect(mail.rootDomain).toBe('bcx.co.za');
+  });
+
+  it('should support multi-part TLDs like .com.br', () => {
+    const mail = new Email(ctx, 'test@vericode.com.br');
+    expect(mail.rootDomain).toBe('vericode.com.br');
+  });
+
+  it('should ignore subdomains with multi-part TLDs', () => {
+    const mail = new Email(ctx, 'test@partner.bcx.co.za');
+    expect(mail.rootDomain).toBe('bcx.co.za');
+  });
+});

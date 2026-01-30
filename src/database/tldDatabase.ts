@@ -13,7 +13,7 @@ export class TldDatabase implements Database<Tld> {
     const response = UrlFetchApp.fetch(REMOTE_TLD_URL);
     const contents = response.getContentText();
 
-    let section;
+    let section = false;
 
     const sections = /^\/\/\s*===BEGIN (ICANN|PRIVATE) DOMAINS===\s*$/;
     const comment = /^\/\/.*?/;
@@ -24,6 +24,7 @@ export class TldDatabase implements Database<Tld> {
       line = line.trim();
 
       if (sections.test(line)) {
+        section = true;
         continue;
       }
       if (comment.test(line)) continue;

@@ -3,6 +3,7 @@ import { Meeting } from './meeting';
 import { extractDomainsFromList } from '../Mail/domain';
 import { titleCase } from '../helpers';
 import { buildContactMap } from './gcontacts';
+import { createStubContact } from './stubContact';
 
 export class MeetingNote {
   meeting: Meeting;
@@ -65,6 +66,12 @@ export class MeetingNote {
     );
   }
 
+  private parseName(displayName: string | undefined, email: string | undefined): string {
+    if (displayName && displayName.trim() !== '') return titleCase(displayName);
+    const parts = (email ?? '').split('@')[0].split(/[._-]/);
+    return titleCase(parts.join(' '));
+  }
+
   private createTemplate() {
     const startDate = Utilities.formatDate(
       new Date(this.meeting.event.start?.dateTime ?? ''),
@@ -78,6 +85,17 @@ export class MeetingNote {
     );
     const accounts = this.findCompany().map(a => '[[' + a + ']]');
     const contactMap = buildContactMap();
+
+    // Create stub contacts for attendees not found in GContacts
+    for (const a of this.meeting.event.attendees ?? []) {
+      if (a.self || !a.email) continue;
+      const emailLower = a.email.toLowerCase();
+      if (!contactMap.has(emailLower)) {
+        const parsed = this.parseName(a.displayName, a.email);
+        createStubContact(this.meeting.ctx, a.email, parsed);
+      }
+    }
+
     const guests = this.listAttendees(contactMap);
 
     const header = `---\nstart_date: "${startDate}"\nend_date: "${endDate}"\ntags:\n  - meeting\n---`;

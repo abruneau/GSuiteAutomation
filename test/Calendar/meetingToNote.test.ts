@@ -637,6 +637,40 @@ Some content here`;
     });
   });
 
+  describe('stub contact creation', () => {
+    it('calls createStubContact for attendees not in GContacts', () => {
+      const { createStubContact } = require('../../src/Calendar/stubContact');
+      const { buildContactMap } = require('../../src/Calendar/gcontacts');
+      (buildContactMap as jest.Mock).mockReturnValue(new Map());
+
+      const note = new MeetingNote(meeting);
+      note.create();
+
+      expect(createStubContact).toHaveBeenCalledWith(
+        ctx,
+        'test@example.com',
+        expect.any(String)
+      );
+    });
+
+    it('does not call createStubContact for attendees resolved via GContacts', () => {
+      const { createStubContact } = require('../../src/Calendar/stubContact');
+      const { buildContactMap } = require('../../src/Calendar/gcontacts');
+      (buildContactMap as jest.Mock).mockReturnValue(
+        new Map([['test@example.com', 'Known Person']])
+      );
+
+      const note = new MeetingNote(meeting);
+      note.create();
+
+      expect(createStubContact).not.toHaveBeenCalledWith(
+        ctx,
+        'test@example.com',
+        expect.any(String)
+      );
+    });
+  });
+
   describe('attendee deduplication', () => {
     it('deduplicates attendees who appear as both attendee and organizer', () => {
       const eventWithDuplicate = {

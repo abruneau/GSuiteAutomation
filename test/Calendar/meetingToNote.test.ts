@@ -3,6 +3,14 @@ import { Settings } from '../../src/settings';
 import { Meeting } from '../../src/Calendar/meeting';
 import { MeetingNote } from '../../src/Calendar/meetingToNote';
 
+jest.mock('../../src/Calendar/gcontacts', () => ({
+  buildContactMap: jest.fn(() => new Map()),
+}));
+
+jest.mock('../../src/Calendar/stubContact', () => ({
+  createStubContact: jest.fn(),
+}));
+
 // Mock Google Apps Script APIs
 const mockDriveFile = {
   getId: jest.fn(() => 'test-file-id'),
@@ -626,6 +634,54 @@ Some content here`;
 
       // Should not throw error
       expect(mockDriveFile.setTrashed).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('attendee deduplication', () => {
+    it('deduplicates attendees who appear as both attendee and organizer', () => {
+      const eventWithDuplicate = {
+        ...mockCalendarEvent,
+        attendees: [
+          { email: 'test@example.com', displayName: 'Test User', self: false },
+          { email: 'organizer@example.com', displayName: 'Organizer', self: false },
+        ],
+        organizer: { email: 'organizer@example.com', displayName: 'Organizer', self: true },
+      };
+      const mtg = new Meeting(ctx, eventWithDuplicate as any);
+      const note = new MeetingNote(mtg);
+      note.create();
+      // organizer@example.com should appear exactly once
+      const matches = (note.note.match(/organizer@example\.com/g) || []).length;
+      expect(matches).toBe(1);
+    });
+  });
+
+  describe('GContacts name resolution', () => {
+    beforeEach(() => {
+      const { buildContactMap } = require('../../src/Calendar/gcontacts');
+      (buildContactMap as jest.Mock).mockReturnValue(
+        new Map([['test@example.com', 'Real Name From Contacts']])
+      );
+    });
+
+    afterEach(() => {
+      const { buildContactMap } = require('../../src/Calendar/gcontacts');
+      (buildContactMap as jest.Mock).mockReturnValue(new Map());
+    });
+
+    it('uses GContacts display name when email matches', () => {
+      const note = new MeetingNote(meeting);
+      note.create();
+      expect(note.note).toContain('[[Real Name From Contacts]]');
+      expect(note.note).toContain('test@example.com');
+    });
+
+    it('falls back to email parsing when no GContacts match', () => {
+      const { buildContactMap } = require('../../src/Calendar/gcontacts');
+      (buildContactMap as jest.Mock).mockReturnValue(new Map());
+      const note = new MeetingNote(meeting);
+      note.create();
+      expect(note.note).toContain('test@example.com');
     });
   });
 

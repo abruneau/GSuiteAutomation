@@ -2,6 +2,7 @@ import { Meeting } from './meeting';
 
 import { extractDomainsFromList } from '../Mail/domain';
 import { titleCase } from '../helpers';
+import { buildContactMap } from './gcontacts';
 
 export class MeetingNote {
   meeting: Meeting;
@@ -27,8 +28,16 @@ export class MeetingNote {
 
   private formatAttendees(
     displayName: string | undefined,
-    email: string | undefined
+    email: string | undefined,
+    contactMap: Map<string, string>
   ): string {
+    const emailLower = (email ?? '').toLowerCase();
+    // GContacts lookup takes priority
+    const resolvedName = contactMap.get(emailLower);
+    if (resolvedName) {
+      return `[[${resolvedName}]] ${email}`;
+    }
+    // Fallback: parse from email or use provided displayName
     if (!displayName || displayName === '') {
       const emailParts = (email ?? '').split('@')[0].split(/[._-]/);
       const firstName = emailParts[0];
@@ -38,20 +47,22 @@ export class MeetingNote {
     return `[[${titleCase(displayName)}]] ${email}`;
   }
 
-  private listAttendees(): string[] {
-    const attendees =
-      this.meeting.event.attendees
-        ?.filter(a => !a.self)
-        .map(a => this.formatAttendees(a.displayName, a.email)) || [];
-    if (!this.meeting.event.organizer?.self) {
-      attendees.push(
-        this.formatAttendees(
-          this.meeting.event.organizer?.displayName,
-          this.meeting.event.organizer?.email
-        )
-      );
+  private listAttendees(contactMap: Map<string, string>): string[] {
+    // Deduplicate by email using a Map — self excluded
+    const seen = new Map<string, GoogleAppsScript.Calendar.Schema.EventAttendee>();
+
+    for (const a of this.meeting.event.attendees ?? []) {
+      if (!a.self && a.email) seen.set(a.email, a);
     }
-    return attendees;
+    // Add organizer only if not self and not already in seen
+    const org = this.meeting.event.organizer;
+    if (org && !org.self && org.email && !seen.has(org.email)) {
+      seen.set(org.email, { email: org.email, displayName: org.displayName });
+    }
+
+    return Array.from(seen.values()).map(a =>
+      this.formatAttendees(a.displayName, a.email, contactMap)
+    );
   }
 
   private createTemplate() {
@@ -66,7 +77,8 @@ export class MeetingNote {
       'yyyy-MM-dd HH:mm'
     );
     const accounts = this.findCompany().map(a => '[[' + a + ']]');
-    const guests = this.listAttendees();
+    const contactMap = buildContactMap();
+    const guests = this.listAttendees(contactMap);
 
     const header = `---\nstart_date: "${startDate}"\nend_date: "${endDate}"\ntags:\n  - meeting\n---`;
     const accountList = `account:: ${accounts.join(',')}`;

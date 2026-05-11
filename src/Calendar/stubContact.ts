@@ -11,6 +11,11 @@ export function createStubContact(
 ): void {
   if (!ctx.CONTACTS_FOLDER_ID) return;
 
+  if (ctx.DEBUG) {
+    ctx.log.info(`[DEBUG] Would create stub contact: ${displayName}.md`);
+    return;
+  }
+
   const fileName = `${displayName}.md`;
   const folder = DriveApp.getFolderById(ctx.CONTACTS_FOLDER_ID);
 
@@ -50,11 +55,6 @@ export function createStubContact(
     'Manager::',
     '',
   ].join('\n');
-
-  if (ctx.DEBUG) {
-    ctx.log.info(`[DEBUG] Would create stub contact: ${fileName}`);
-    return;
-  }
 
   folder.createFile(fileName, content);
   ctx.log.info(`Created stub contact: ${fileName}`);

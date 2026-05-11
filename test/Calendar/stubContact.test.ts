@@ -64,5 +64,6 @@ describe('createStubContact', () => {
     ctx.DEBUG = true;
     createStubContact(ctx, 'john.doe@acme.com', 'John Doe');
     expect(mockFolder.createFile).not.toHaveBeenCalled();
+    expect(DriveApp.getFolderById).not.toHaveBeenCalled();
   });
 });

@@ -6,9 +6,17 @@
         "userSymbol": "Calendar",
         "version": "v3",
         "serviceId": "calendar"
+      },
+      {
+        "userSymbol": "People",
+        "serviceId": "people",
+        "version": "v1"
       }
     ]
   },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/contacts.readonly"
+  ],
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8"
 }

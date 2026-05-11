@@ -9,6 +9,7 @@ export class Context {
   LABEL_PREFIX!: string;
   BLACK_LIST_DOMAIN!: string[];
   NOTES_FOLDER_ID!: string;
+  CONTACTS_FOLDER_ID!: string;
   FEATURE_FOLDER_ID!: string;
   DEBUG!: boolean;
   tbpLabel!: GoogleAppsScript.Gmail.GmailLabel;
@@ -27,6 +28,7 @@ export class Context {
     this.BLACK_LIST_DOMAIN =
       settings.get('BLACK_LIST_DOMAIN')?.split(',') || [];
     this.NOTES_FOLDER_ID = settings.get('NOTES_FOLDER_ID') || '';
+    this.CONTACTS_FOLDER_ID = settings.get('CONTACTS_FOLDER_ID') || '';
     this.DEBUG = settings.getBoolean('DEBUG') || false;
     this.log = new Log(settings);
   }

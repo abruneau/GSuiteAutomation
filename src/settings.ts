@@ -39,6 +39,7 @@ export class Settings {
       this.settingsSheet.appendRow(['LABEL_PREFIX', 'Accounts/']);
       this.settingsSheet.appendRow(['BLACK_LIST_DOMAIN', '']);
       this.settingsSheet.appendRow(['NOTES_FOLDER_ID', '']);
+      this.settingsSheet.appendRow(['CONTACTS_FOLDER_ID', '']);
       this.settingsSheet.appendRow(['TBP_LABEL', '']);
       this.settingsSheet.appendRow(['DEBUG', 'No']);
       this.settingsSheet.appendRow(['TAG_EMAILS', 'Yes']);

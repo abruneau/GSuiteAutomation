@@ -50,7 +50,10 @@ export class MeetingNote {
 
   private listAttendees(contactMap: Map<string, string>): string[] {
     // Deduplicate by email using a Map — self excluded
-    const seen = new Map<string, GoogleAppsScript.Calendar.Schema.EventAttendee>();
+    const seen = new Map<
+      string,
+      GoogleAppsScript.Calendar.Schema.EventAttendee
+    >();
 
     for (const a of this.meeting.event.attendees ?? []) {
       if (!a.self && a.email) seen.set(a.email, a);
@@ -66,7 +69,10 @@ export class MeetingNote {
     );
   }
 
-  private parseName(displayName: string | undefined, email: string | undefined): string {
+  private parseName(
+    displayName: string | undefined,
+    email: string | undefined
+  ): string {
     if (displayName && displayName.trim() !== '') return titleCase(displayName);
     const parts = (email ?? '').split('@')[0].split(/[._-]/);
     return titleCase(parts.join(' '));
@@ -465,6 +471,22 @@ export class MeetingNote {
       this.meeting.event.extendedProperties = {
         private: { note: fileId },
       };
+    }
+    // Persist to Calendar API so the note ID survives future syncs.
+    // Best-effort: rate limit errors are logged and skipped so the sync continues.
+    if (!this.meeting.ctx.DEBUG && this.meeting.event.id) {
+      try {
+        const calendarId = CalendarApp.getDefaultCalendar().getId();
+        Calendar?.Events?.patch(
+          { extendedProperties: { private: { note: fileId } } },
+          calendarId,
+          this.meeting.event.id
+        );
+      } catch (e) {
+        this.meeting.ctx.log.warn(
+          `Could not persist note ID for ${this.meeting.title}: ${e}`
+        );
+      }
     }
   }
 

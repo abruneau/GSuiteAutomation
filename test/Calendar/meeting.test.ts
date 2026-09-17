@@ -45,6 +45,7 @@ const mockDriveFolder = {
 };
 
 const mockCalendar = {
+  getId: jest.fn(() => 'test-calendar-id'),
   getEventById: jest.fn(() => ({
     getColor: jest.fn(() => ''),
     setColor: jest.fn(),
@@ -67,6 +68,12 @@ const mockCalendar = {
   EventColor: {
     PALE_RED: 'PALE_RED',
     PALE_GREEN: 'PALE_GREEN',
+  },
+};
+
+(global as any).Calendar = {
+  Events: {
+    patch: jest.fn(),
   },
 };
 
@@ -223,6 +230,42 @@ describe('Meeting', () => {
         private: { note: 'new-file-id' },
       });
     });
+
+    it('should persist note ID to Calendar API', () => {
+      meeting.event.id = 'test-event-id';
+      meeting.event.extendedProperties = { private: {} };
+
+      (meeting as any).storeNoteId('new-file-id');
+
+      expect((global as any).Calendar.Events.patch).toHaveBeenCalledWith(
+        { extendedProperties: { private: { note: 'new-file-id' } } },
+        'test-calendar-id',
+        'test-event-id'
+      );
+    });
+
+    it('should not call Calendar API in DEBUG mode', () => {
+      ctx.DEBUG = true;
+      meeting.event.id = 'test-event-id';
+      meeting.event.extendedProperties = { private: {} };
+
+      (meeting as any).storeNoteId('new-file-id');
+
+      expect((global as any).Calendar.Events.patch).not.toHaveBeenCalled();
+    });
+
+    it('should warn and continue when Calendar API patch throws (rate limit)', () => {
+      meeting.event.id = 'test-event-id';
+      meeting.event.extendedProperties = { private: {} };
+      (global as any).Calendar.Events.patch.mockImplementationOnce(() => {
+        throw new Error('Rate Limit Exceeded');
+      });
+
+      expect(() => (meeting as any).storeNoteId('new-file-id')).not.toThrow();
+      expect(ctx.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Could not persist note ID')
+      );
+    });
   });
 
   describe('attendees', () => {
@@ -354,16 +397,16 @@ describe('Meeting', () => {
   });
 
   describe('removeNote', () => {
-    it('should mark note as cancelled', () => {
+    it('should delete the note', () => {
       const mockMeetingNote = {
-        markAsCancelled: jest.fn(),
+        delete: jest.fn(),
       };
       (MeetingNote as jest.Mock).mockReturnValue(mockMeetingNote);
 
       meeting.removeNote();
 
       expect(MeetingNote).toHaveBeenCalledWith(meeting);
-      expect(mockMeetingNote.markAsCancelled).toHaveBeenCalled();
+      expect(mockMeetingNote.delete).toHaveBeenCalled();
     });
   });
 

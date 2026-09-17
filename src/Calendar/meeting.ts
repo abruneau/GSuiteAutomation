@@ -80,6 +80,20 @@ export class Meeting {
         private: { note: fileId },
       };
     }
+    // Persist to Calendar API so the note ID survives future syncs.
+    // Best-effort: rate limit errors are logged and skipped so the sync continues.
+    if (!this.ctx.DEBUG && this.event.id) {
+      try {
+        const calendarId = CalendarApp.getDefaultCalendar().getId();
+        Calendar?.Events?.patch(
+          { extendedProperties: { private: { note: fileId } } },
+          calendarId,
+          this.event.id
+        );
+      } catch (e) {
+        this.ctx.log.warn(`Could not persist note ID for ${this.title}: ${e}`);
+      }
+    }
   }
 
   attendees(): Email[] {
@@ -112,13 +126,20 @@ export class Meeting {
   }
 
   isOnsite(): boolean {
-    if (this.event.location?.includes("Google Meet")) {
-      return false
+    if (this.event.location?.includes('Google Meet')) {
+      return false;
     }
-    if (this.event.location?.includes("Microsoft Teams Meeting")) {
-      return false
+    if (this.event.location?.includes('Teams')) {
+      return false;
     }
-    return !!(this.event.location && this.event.location !== '' && this.event.location !== null);
+    if (this.event.location?.includes('Paris Office')) {
+      return false;
+    }
+    return !!(
+      this.event.location &&
+      this.event.location !== '' &&
+      this.event.location !== null
+    );
   }
 
   createBlocker(cal: GoogleAppsScript.Calendar.Calendar) {
@@ -166,7 +187,7 @@ export class Meeting {
 
   removeNote() {
     const note = new MeetingNote(this);
-    note.markAsCancelled();
+    note.delete();
   }
 
   colorize() {

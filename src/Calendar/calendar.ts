@@ -156,19 +156,19 @@ export class CalendarSync {
               }
             }
           }
-        } else if (!meeting.isExternal() && meeting.is1to1()) {
-          // Handle 1-to-1 internal meetings
-          if (this.config.meetingToNote) {
-            if (hasExistingNote) {
-              // Note exists, update it
-              meeting.updateNote();
-              this.ctx.log.debug(`Updated note for ${meeting.title}`);
-            } else {
-              // Create new note
-              meeting.createNote();
-              notes++;
-            }
-          }
+        // } else if (!meeting.isExternal() && meeting.is1to1()) {
+        //   // Handle 1-to-1 internal meetings
+        //   if (this.config.meetingToNote) {
+        //     if (hasExistingNote) {
+        //       // Note exists, update it
+        //       meeting.updateNote();
+        //       this.ctx.log.debug(`Updated note for ${meeting.title}`);
+        //     } else {
+        //       // Create new note
+        //       meeting.createNote();
+        //       notes++;
+        //     }
+        //   }
         }
       });
 

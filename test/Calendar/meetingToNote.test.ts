@@ -54,6 +54,18 @@ const mockCalendarEvent = {
   getFolderById: jest.fn(() => mockDriveFolder),
 };
 
+(global as any).CalendarApp = {
+  getDefaultCalendar: jest.fn(() => ({
+    getId: jest.fn(() => 'test-calendar-id'),
+  })),
+};
+
+(global as any).Calendar = {
+  Events: {
+    patch: jest.fn(),
+  },
+};
+
 (global as any).Utilities = {
   formatDate: jest.fn((date, timezone, format) => {
     const d = new Date(date);
@@ -70,6 +82,8 @@ describe('MeetingNote', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset shared event object to prevent cross-test mutation from storeNoteId
+    mockCalendarEvent.extendedProperties = { private: {} };
 
     ctx = new Context(new Settings());
     ctx.NOTES_FOLDER_ID = 'test-folder-id';
@@ -180,6 +194,29 @@ describe('MeetingNote', () => {
 
       expect(meeting.event.extendedProperties?.private?.['note']).toBe(
         'test-file-id'
+      );
+    });
+
+    it('should persist note ID to Calendar API when creating new file', () => {
+      meetingNote.create();
+      meetingNote.save();
+
+      expect((global as any).Calendar.Events.patch).toHaveBeenCalledWith(
+        { extendedProperties: { private: { note: 'test-file-id' } } },
+        'test-calendar-id',
+        'test-event-id'
+      );
+    });
+
+    it('should warn and continue when Calendar API patch throws (rate limit)', () => {
+      (global as any).Calendar.Events.patch.mockImplementationOnce(() => {
+        throw new Error('Rate Limit Exceeded');
+      });
+
+      meetingNote.create();
+      expect(() => meetingNote.save()).not.toThrow();
+      expect(ctx.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Could not persist note ID')
       );
     });
   });
@@ -677,9 +714,17 @@ Some content here`;
         ...mockCalendarEvent,
         attendees: [
           { email: 'test@example.com', displayName: 'Test User', self: false },
-          { email: 'organizer@example.com', displayName: 'Organizer', self: false },
+          {
+            email: 'organizer@example.com',
+            displayName: 'Organizer',
+            self: false,
+          },
         ],
-        organizer: { email: 'organizer@example.com', displayName: 'Organizer', self: true },
+        organizer: {
+          email: 'organizer@example.com',
+          displayName: 'Organizer',
+          self: true,
+        },
       };
       const mtg = new Meeting(ctx, eventWithDuplicate as any);
       const note = new MeetingNote(mtg);

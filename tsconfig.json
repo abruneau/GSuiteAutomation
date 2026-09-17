@@ -12,7 +12,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowUnreachableCode": false,
-    "allowUnusedLabels": false
+    "allowUnusedLabels": false,
+    "types": ["google-apps-script", "jest", "node"]
   },
   "include": ["src/**/*", "test/**/*", "rollup.config.mjs"]
 }
